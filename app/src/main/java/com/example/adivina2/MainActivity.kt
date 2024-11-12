@@ -48,18 +48,22 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun Adivinanza2() {
     // NumOcult = número ocultos
-    val HideNumbers = remember { (1..9).shuffled().take(9).toMutableList() }
+    var HideNumbers = remember { (1..9).shuffled().take(9).toMutableList() }
     // NumMost = números mostrados
-    var NumMost = remember { MutableList(9) { 0 }.toMutableStateList() }
+    var NumMost = remember { MutableList(2) { 0 }.toMutableStateList() }
     // estado de la caja, cc = celdas correctas
-    var cc = remember { MutableList(9) { false }.toMutableStateList() }
+    var cc = remember { MutableList(2) { false }.toMutableStateList() }
     // contador de intentos
     var contador by remember { mutableStateOf(0) }
 
     // Resetear los valores
     fun resetGame() {
-        NumMost = (1..9).shuffled().take(9).toMutableList().toMutableStateList()
-        cc = MutableList(9) { false }.toMutableStateList()
+        HideNumbers.clear()
+        HideNumbers.addAll((1..9).shuffled().take(2))
+        NumMost[0] = 0
+        NumMost[1] = 0
+        cc[0] = false
+        cc[1] = false
         contador = 0
     }
 
@@ -110,38 +114,35 @@ fun Celda(numerosMostrados: MutableList<Int>, celdasCorrectas: MutableList<Boole
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.padding(bottom = 16.dp)
     ) {
-        // Crear 3 filas de 3 celdas
-        repeat(3) { rowIndex ->
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(bottom = 8.dp)
-            ) {
-                repeat(3) { colIndex ->
-                    val index = rowIndex * 3 + colIndex
-                    Box(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .border(
-                                width = 2.dp,
-                                color = if (celdasCorrectas.getOrElse(index) { false }) Color.Green
-                                else MaterialTheme.colorScheme.primary,
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .clickable {
-                                if (!celdasCorrectas.getOrElse(index) { false }) {
-                                    numerosMostrados[index] = (numerosMostrados[index] % 9) + 1
-                                }
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = if (celdasCorrectas.getOrElse(index) { false }) numerosMostrados[index].toString()
-                            else if (numerosMostrados[index] == 0) ""
-                            else numerosMostrados[index].toString(),
-                            style = MaterialTheme.typography.headlineMedium,
-                            textAlign = TextAlign.Center
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(bottom = 8.dp)
+        ) {
+            // Crear solo 2 celdas en una fila
+            repeat(2) { index ->
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .border(
+                            width = 2.dp,
+                            color = if (celdasCorrectas.getOrElse(index) { false }) Color.Green
+                            else MaterialTheme.colorScheme.primary,
+                            shape = RoundedCornerShape(8.dp)
                         )
-                    }
+                        .clickable {
+                            if (!celdasCorrectas.getOrElse(index) { false }) {
+                                numerosMostrados[index] = (numerosMostrados[index] % 9) + 1
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (celdasCorrectas.getOrElse(index) { false }) numerosMostrados[index].toString()
+                        else if (numerosMostrados[index] == 0) ""
+                        else numerosMostrados[index].toString(),
+                        style = MaterialTheme.typography.headlineMedium,
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
         }
