@@ -33,9 +33,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            Adivina2Theme  {
+            Adivina2Theme {
                 Surface(
-                    modifier=Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Adivinanza2()
@@ -43,112 +43,140 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-    // Aqui iria para ser privada
 }
-// funcion publica
-@Composable
-fun Adivinanza2(){
-    // NumOcult = numero ocultos
-    val NumOcultos = remember {(1..9).shuffled().take(2).toMutableList() }
-    // NumMost = numero mostrados
-    var NumMost = remember { MutableList(1){ 0 }.toMutableStateList() }
-    // estado de la caja,cc= celdas correctas
-    var cc = remember{ MutableList(1){false}.toMutableStateList() }
 
-    // columna unica
+@Composable
+fun Adivinanza2() {
+    // NumOcult = número ocultos
+    val HideNumbers = remember { (1..9).shuffled().take(9).toMutableList() }
+    // NumMost = números mostrados
+    var NumMost = remember { MutableList(9) { 0 }.toMutableStateList() }
+    // estado de la caja, cc = celdas correctas
+    var cc = remember { MutableList(9) { false }.toMutableStateList() }
+    // contador de intentos
+    var contador by remember { mutableStateOf(0) }
+
+    // Resetear los valores
+    fun resetGame() {
+        NumMost = (1..9).shuffled().take(9).toMutableList().toMutableStateList()
+        cc = MutableList(9) { false }.toMutableStateList()
+        contador = 0
+    }
+
+    // columna única
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(17.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(17.dp)
-    ){
-        // Llamar a una funcion titulo
+    ) {
+        // Llamar a una función título
         GameTitle()
-        // LLamar a una funcion box
-        Celda(NumMost,cc)
-        // LLamar a una funcion boton
-        Validar(NumOcultos,NumMost,cc)
+        // Llamar a una función box
+        Celda(NumMost, cc)
+        // Llamar a una función botón
+        Validar(HideNumbers, NumMost, cc, { contador++ })
+        // Resultado
         Resultado(cc)
-        //Mostramos el debugging
-        Debug(NumMost)
+        // Mostramos el contador de intentos
+        Text("Intentos: $contador", style = MaterialTheme.typography.bodyMedium)
+        // Botón para resetear el juego
+        Button(
+            onClick = { resetGame() },
+            modifier = Modifier.padding(top = 20.dp)
+        ) {
+            Text("Reiniciar Juego")
+        }
+        // Mostrar el estado de depuración
+        Debug(HideNumbers)
     }
 }
 
 @Composable
-fun GameTitle(){
-    Spacer(modifier=Modifier.size(100.dp))
-    Text("Adivina dos numeros (1-9)",
-        style= MaterialTheme.typography.headlineMedium,
+fun GameTitle() {
+    Spacer(modifier = Modifier.size(100.dp))
+    Text("Adivina dos números (1-9)",
+        style = MaterialTheme.typography.headlineMedium,
         modifier = Modifier
             .padding(16.dp)
     )
 }
 
 @Composable
-fun Celda(numerosMostrados: MutableList<Int>,
-          celdasCorrectas: MutableList<Boolean>){
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+fun Celda(numerosMostrados: MutableList<Int>, celdasCorrectas: MutableList<Boolean>) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.padding(bottom = 16.dp)
     ) {
-        repeat(1) { index ->
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .border(
-                        width = 2.dp,
-                        color = if (celdasCorrectas[index]) Color.Green
-                        else MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    .clickable {
-                        if (!celdasCorrectas[index]) {
-                            numerosMostrados[index] = (numerosMostrados[index] % 9) + 1
-                        }
-                    },
-                contentAlignment = Alignment.Center
+        // Crear 3 filas de 3 celdas
+        repeat(3) { rowIndex ->
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(bottom = 8.dp)
             ) {
-                Text(
-                    text = if (celdasCorrectas[index]) numerosMostrados[index].toString()
-                    else if (numerosMostrados[index] == 0) ""
-                    else numerosMostrados[index].toString(),
-                    style = MaterialTheme.typography.headlineMedium,
-                    textAlign = TextAlign.Center
-                )
+                repeat(3) { colIndex ->
+                    val index = rowIndex * 3 + colIndex
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .border(
+                                width = 2.dp,
+                                color = if (celdasCorrectas.getOrElse(index) { false }) Color.Green
+                                else MaterialTheme.colorScheme.primary,
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .clickable {
+                                if (!celdasCorrectas.getOrElse(index) { false }) {
+                                    numerosMostrados[index] = (numerosMostrados[index] % 9) + 1
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (celdasCorrectas.getOrElse(index) { false }) numerosMostrados[index].toString()
+                            else if (numerosMostrados[index] == 0) ""
+                            else numerosMostrados[index].toString(),
+                            style = MaterialTheme.typography.headlineMedium,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-fun Validar(NumOcultos:MutableList<Int>,NumMost:MutableList<Int>,cc:MutableList<Boolean>) {
+fun Validar(NumOcultos: MutableList<Int>, NumMost: MutableList<Int>, cc: MutableList<Boolean>, aumentarContador: () -> Unit) {
     Button(
         onClick = {
-            NumMost.forEachIndexed{index,numero ->
+            NumMost.forEachIndexed { index, numero ->
                 cc[index] = (numero == NumOcultos[index])
             }
+            aumentarContador()
         },
-        modifier = Modifier.padding(top=17.dp)
-    ){
+        modifier = Modifier.padding(top = 17.dp)
+    ) {
         Text("Validar")
     }
 }
 
 @Composable
-fun Resultado(cc:MutableList<Boolean>){
-    if(cc.any{it}){
-        Text("Acertaste el numero",
+fun Resultado(cc: MutableList<Boolean>) {
+    if (cc.all { it }) {
+        Text("¡Ganaste! Todos los números son correctos.",
             style = MaterialTheme.typography.bodyMedium,
-            color=MaterialTheme.colorScheme.primary
+            color = Color.Green
         )
     }
 }
 
 @Composable
-fun Debug(nm:MutableList<Int>){
+fun Debug(HideNumbers: List<Int>) {
     Text(
-        text = "Valores actuales: ${nm.joinToString(", ")}",
+        text = "Valores actuales: ${HideNumbers.joinToString(", ")}",
         style = MaterialTheme.typography.bodySmall,
         modifier = Modifier.padding(top = 16.dp)
     )
