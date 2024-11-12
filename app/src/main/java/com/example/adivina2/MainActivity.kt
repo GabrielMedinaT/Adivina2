@@ -36,11 +36,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
 @Composable
 fun Adivinanza2() {
-    val originalNumbers = generateSudoku()  // Genera un tablero de Sudoku válido
+    val originalNumbers = generateSudoku().toMutableList()  // Genera un tablero de Sudoku válido y lo convierte a MutableList
     val editableNumbers = originalNumbers.map { if (it == 0) 1 else it }.toMutableStateList()
-    val isEditable = originalNumbers.map { it == 0 }.toMutableStateList()  // Solo los ceros son editables
+    val isEditable = originalNumbers.map { it == 0 }.toMutableList()  // Convierte a MutableList
+
     var isSolved by remember { mutableStateOf(false) }
     var attempts by remember { mutableStateOf(0) }
 
@@ -64,7 +66,10 @@ fun Adivinanza2() {
     ) {
         GameTitle()
         SudokuGrid(editableNumbers, isEditable)
-        ValidateButton(originalNumbers, editableNumbers, isEditable, attempts) { isSolved = it }
+        ValidateButton(originalNumbers, editableNumbers, isEditable, attempts) {
+            isSolved = it
+            if (!isSolved) attempts++ // Aumenta los intentos solo si el tablero no está resuelto
+        }
         if (isSolved) {
             Text("¡Ganaste! Tablero completo.", color = Color.Green, style = MaterialTheme.typography.bodyMedium)
         }
@@ -85,7 +90,7 @@ fun SudokuGrid(numbers: MutableList<Int>, isEditable: List<Boolean>) {
                     val index = i * 9 + j
                     SudokuCell(
                         number = numbers[index],
-                        isCorrect = isEditable[index],
+                        isCorrect = !isEditable[index],
                         isEditable = isEditable[index],
                         onClick = {
                             if (isEditable[index]) {
@@ -118,11 +123,17 @@ fun SudokuCell(number: Int, isCorrect: Boolean, isEditable: Boolean, onClick: ()
 }
 
 @Composable
-fun ValidateButton(originalNumbers: List<Int>, editableNumbers: List<Int>, isEditable: List<Boolean>, attempts: Int, onSolved: (Boolean) -> Unit) {
+fun ValidateButton(
+    originalNumbers: List<Int>,
+    editableNumbers: List<Int>,
+    isEditable: List<Boolean>,
+    attempts: Int,
+    onSolved: (Boolean) -> Unit
+) {
     Button(
         onClick = {
             val isCorrect = originalNumbers.indices.all { index ->
-                (originalNumbers[index] == 0 && editableNumbers[index] != 0) || (originalNumbers[index] != 0 && originalNumbers[index] == editableNumbers[index])
+                !isEditable[index] || (editableNumbers[index] == originalNumbers[index])
             }
             onSolved(isCorrect)
         },
@@ -134,6 +145,25 @@ fun ValidateButton(originalNumbers: List<Int>, editableNumbers: List<Int>, isEdi
 
 fun generateSudoku(): List<Int> {
     // Implementa aquí o usa una función para generar una disposición válida de Sudoku.
-    return List(81) { 0 }  // Aquí puedes agregar una lista de ejemplo o un generador de Sudoku.
+    // Ejemplo: Aquí puedes reemplazar con un tablero de Sudoku predefinido
+    return List(81) { if (it % 5 == 0) 0 else (it % 9) + 1 }  // Genera algunos ceros y números como ejemplo
 }
 
+@Composable
+fun Debug(hideNumbers: List<Int>) {
+    Text(
+        text = "Valores actuales: ${hideNumbers.joinToString(", ")}",
+        style = MaterialTheme.typography.bodySmall,
+        modifier = Modifier.padding(top = 16.dp)
+    )
+}
+@Composable
+fun GameTitle() {
+    Text(
+        text = "Juego de Sudoku",
+        style = MaterialTheme.typography.titleLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(16.dp),
+        textAlign = TextAlign.Center
+    )
+}
