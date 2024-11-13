@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun Adivinanza2() {
     // Números ocultos
-    var HideNumbers by remember { mutableStateOf((1..9).shuffled().take(9).toMutableList()) }
+    var HideNumbers by remember { mutableStateOf((1..9).shuffled().toMutableList()) }
     // Números mostrados en pantalla (inicialmente en 0 para que estén vacíos)
     var NumMost = remember { mutableStateListOf(*MutableList(9) { 0 }.toTypedArray()) }
     // Estado de celdas correctas (inicialmente todas en falso)
@@ -56,14 +56,11 @@ fun Adivinanza2() {
     // Contador de intentos
     var contador by remember { mutableStateOf(0) }
 
-    // Resetear los valores
-    fun resetGame() {
-        HideNumbers = (1..9).shuffled().take(9).toMutableList()
-        NumMost.clear()
-        NumMost.addAll(List(9) { 0 }) // Cambia los números mostrados a 0
-        cc.clear()
-        cc.addAll(List(9) { false })   // Cambia  las celdas a no acertadas
-        contador = 0
+    // Inicialización del juego con dos números revelados
+    LaunchedEffect(Unit) {
+        resetGame(HideNumbers, NumMost, cc) {
+            contador = 0
+        }
     }
 
     // Columna principal
@@ -86,21 +83,50 @@ fun Adivinanza2() {
         Text("Intentos: $contador", style = MaterialTheme.typography.bodyMedium)
         // Botón para reiniciar el juego
         Button(
-            onClick = { resetGame() },
+            onClick = {
+                resetGame(HideNumbers, NumMost, cc) {
+                    contador = 0
+                }
+            },
             modifier = Modifier.padding(top = 20.dp)
         ) {
             Text("Reiniciar Juego")
         }
         // Mostrar el estado de depuración
-        Debug(HideNumbers)
+        // Debug(HideNumbers)
     }
 }
+
+fun resetGame(
+    hiddenNumbers: MutableList<Int>,
+    shownNumbers: MutableList<Int>,
+    correctCells: MutableList<Boolean>,
+    resetCounter: () -> Unit
+) {
+    hiddenNumbers.clear()
+    hiddenNumbers.addAll((1..9).shuffled()) // Generar nuevos números ocultos
+    shownNumbers.clear()
+    shownNumbers.addAll(List(9) { 0 }) // Limpiar los números mostrados
+    correctCells.clear()
+    correctCells.addAll(List(9) { false }) // Reiniciar el estado de las celdas
+
+    // Resetear el contador
+    resetCounter()
+
+    // Revelar dos números en posiciones aleatorias
+    val revealedIndices = (0..8).shuffled().take(0) // Elegir dos posiciones aleatorias
+    for (index in revealedIndices) {
+        shownNumbers[index] = hiddenNumbers[index] // Mostrar el número correspondiente
+        correctCells[index] = true // Marcar la celda como correcta
+    }
+}
+
 
 
 @Composable
 fun GameTitle() {
     Spacer(modifier = Modifier.size(100.dp))
-    Text("Adivina dos números (1-9)",
+    Text("Adivina números (1-9)",
         style = MaterialTheme.typography.headlineMedium,
         modifier = Modifier
             .padding(16.dp)
@@ -176,7 +202,7 @@ fun Resultado(cc: MutableList<Boolean>) {
         )
     }
 }
-
+/*
 @Composable
 fun Debug(HideNumbers: List<Int>) {
     Text(
@@ -185,3 +211,4 @@ fun Debug(HideNumbers: List<Int>) {
         modifier = Modifier.padding(top = 16.dp)
     )
 }
+*/
