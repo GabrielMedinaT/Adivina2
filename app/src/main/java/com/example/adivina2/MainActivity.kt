@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.adivina2.Celda
 import com.example.adivina2.ui.theme.Adivina2Theme
 
 class MainActivity : ComponentActivity() {
@@ -44,26 +45,25 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
 @Composable
 fun Adivinanza2() {
-    // NumOcult = número ocultos
-    val HideNumbers = remember { (1..9).shuffled().take(9).toMutableList() }
-    // NumMost = números mostrados
-    var NumMost = remember { MutableList(9) { 0 }.toMutableStateList() }
-    // estado de la caja, cc = celdas correctas
-    var cc = remember { MutableList(9) { false }.toMutableStateList() }
-    // contador de intentos
+    // Números ocultos
+    var HideNumbers by remember { mutableStateOf((1..9).shuffled().toMutableList()) }
+    // Números mostrados en pantalla (inicialmente en 0 para que estén vacíos)
+    var NumMost = remember { mutableStateListOf(*MutableList(9) { 0 }.toTypedArray()) }
+    // Estado de celdas correctas (inicialmente todas en falso)
+    var cc = remember { mutableStateListOf(*MutableList(9) { false }.toTypedArray()) }
+    // Contador de intentos
     var contador by remember { mutableStateOf(0) }
 
-    // Resetear los valores
-    fun resetGame() {
-        NumMost = (1..9).shuffled().take(9).toMutableList().toMutableStateList()
-        cc = MutableList(9) { false }.toMutableStateList()
-        contador = 0
+    // Inicialización del juego con dos números revelados
+    LaunchedEffect(Unit) {
+        resetGame(HideNumbers, NumMost, cc) {
+            contador = 0
+        }
     }
 
-    // columna única
+    // Columna principal
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -71,32 +71,62 @@ fun Adivinanza2() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(17.dp)
     ) {
-        // Llamar a una función título
+        // Título del juego
         GameTitle()
-        // Llamar a una función box
+        // Mostrar celdas de números
         Celda(NumMost, cc)
-        // Llamar a una función botón
+        // Botón de validación
         Validar(HideNumbers, NumMost, cc, { contador++ })
-        // Resultado
+        // Resultado del juego
         Resultado(cc)
-        // Mostramos el contador de intentos
+        // Contador de intentos
         Text("Intentos: $contador", style = MaterialTheme.typography.bodyMedium)
-        // Botón para resetear el juego
+        // Botón para reiniciar el juego
         Button(
-            onClick = { resetGame() },
+            onClick = {
+                resetGame(HideNumbers, NumMost, cc) {
+                    contador = 0
+                }
+            },
             modifier = Modifier.padding(top = 20.dp)
         ) {
             Text("Reiniciar Juego")
         }
         // Mostrar el estado de depuración
-        Debug(HideNumbers)
+        // Debug(HideNumbers)
     }
 }
+
+fun resetGame(
+    hiddenNumbers: MutableList<Int>,
+    shownNumbers: MutableList<Int>,
+    correctCells: MutableList<Boolean>,
+    resetCounter: () -> Unit
+) {
+    hiddenNumbers.clear()
+    hiddenNumbers.addAll((1..9).shuffled()) // Generar nuevos números ocultos
+    shownNumbers.clear()
+    shownNumbers.addAll(List(9) { 0 }) // Limpiar los números mostrados
+    correctCells.clear()
+    correctCells.addAll(List(9) { false }) // Reiniciar el estado de las celdas
+
+    // Resetear el contador
+    resetCounter()
+
+    // Revelar dos números en posiciones aleatorias
+    val revealedIndices = (0..8).shuffled().take(0) // Elegir dos posiciones aleatorias
+    for (index in revealedIndices) {
+        shownNumbers[index] = hiddenNumbers[index] // Mostrar el número correspondiente
+        correctCells[index] = true // Marcar la celda como correcta
+    }
+}
+
+
 
 @Composable
 fun GameTitle() {
     Spacer(modifier = Modifier.size(100.dp))
-    Text("Adivina dos números (1-9)",
+    Text("Adivina números (1-9)",
         style = MaterialTheme.typography.headlineMedium,
         modifier = Modifier
             .padding(16.dp)
@@ -172,7 +202,7 @@ fun Resultado(cc: MutableList<Boolean>) {
         )
     }
 }
-
+/*
 @Composable
 fun Debug(HideNumbers: List<Int>) {
     Text(
@@ -181,3 +211,4 @@ fun Debug(HideNumbers: List<Int>) {
         modifier = Modifier.padding(top = 16.dp)
     )
 }
+*/
