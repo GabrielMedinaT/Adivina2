@@ -44,26 +44,28 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
 @Composable
 fun Adivinanza2() {
-    // NumOcult = número ocultos
-    val HideNumbers = remember { (1..9).shuffled().take(9).toMutableList() }
-    // NumMost = números mostrados
-    var NumMost = remember { MutableList(9) { 0 }.toMutableStateList() }
-    // estado de la caja, cc = celdas correctas
-    var cc = remember { MutableList(9) { false }.toMutableStateList() }
-    // contador de intentos
+    // Números ocultos
+    var HideNumbers by remember { mutableStateOf((1..9).shuffled().take(9).toMutableList()) }
+    // Números mostrados en pantalla (inicialmente en 0 para que estén vacíos)
+    var NumMost = remember { mutableStateListOf(*MutableList(9) { 0 }.toTypedArray()) }
+    // Estado de celdas correctas (inicialmente todas en falso)
+    var cc = remember { mutableStateListOf(*MutableList(9) { false }.toTypedArray()) }
+    // Contador de intentos
     var contador by remember { mutableStateOf(0) }
 
     // Resetear los valores
     fun resetGame() {
-        NumMost = (1..9).shuffled().take(9).toMutableList().toMutableStateList()
-        cc = MutableList(9) { false }.toMutableStateList()
+        HideNumbers = (1..9).shuffled().take(9).toMutableList()
+        NumMost.clear()
+        NumMost.addAll(List(9) { 0 }) // Cambia los números mostrados a 0
+        cc.clear()
+        cc.addAll(List(9) { false })   // Cambia  las celdas a no acertadas
         contador = 0
     }
 
-    // columna única
+    // Columna principal
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -71,17 +73,17 @@ fun Adivinanza2() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(17.dp)
     ) {
-        // Llamar a una función título
+        // Título del juego
         GameTitle()
-        // Llamar a una función box
+        // Mostrar celdas de números
         Celda(NumMost, cc)
-        // Llamar a una función botón
+        // Botón de validación
         Validar(HideNumbers, NumMost, cc, { contador++ })
-        // Resultado
+        // Resultado del juego
         Resultado(cc)
-        // Mostramos el contador de intentos
+        // Contador de intentos
         Text("Intentos: $contador", style = MaterialTheme.typography.bodyMedium)
-        // Botón para resetear el juego
+        // Botón para reiniciar el juego
         Button(
             onClick = { resetGame() },
             modifier = Modifier.padding(top = 20.dp)
@@ -92,6 +94,7 @@ fun Adivinanza2() {
         Debug(HideNumbers)
     }
 }
+
 
 @Composable
 fun GameTitle() {
